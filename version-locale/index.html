@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de Songo Moderne</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="ecran-accueil" class="ecran active">
+        <div class="carte-accueil">
+            <h1>Bienvenue au Jeu du Songo Moderne</h1>
+            <p class="sous-titre">Le jeu de stratégie traditionnel africain, réinventé.</p>
+            
+            <div class="menu-principal">
+                <button id="btn-nouvelle-partie" class="bouton-menu principal">🎮 Nouvelle Partie</button>
+                <button id="btn-partie-en-cours" class="bouton-menu" disabled>⏳ Partie en cours</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ecran-jeu" class="ecran">
+        <button id="btn-toggle-sidebar" class="bouton-hamburger">☰ Menu</button>
+
+        <div class="layout-jeu">
+            <aside class="barre-laterale" id="ma-barre-laterale">
+                <h2>Menu Songo</h2>
+                <div class="groupe-boutons-lateraux">
+                    <button id="btn-initialiser" class="bouton-lateral action">🌱 Distribuer les Graines</button>
+                    <button id="btn-recommencer" class="bouton-lateral danger">🏳️ Capituler</button>
+                </div>
+
+                <div class="bloc-regles">
+                    <button id="btn-regles" class="bouton-indice">💡 Règles du Jeu</button>
+                    <div id="texte-regles" class="regles-cachees">
+                        <h3>Règles du Songo</h3>
+                        <ul>
+                            <li><strong>Le Plateau :</strong> 2 rangées de 7 cases. Ta rangée est celle du bas (Moi), celle de l'adversaire est en haut.</li>
+                            <li><strong>Le But :</strong> Le premier qui mange **40 graines** gagne.</li>
+                            <li><strong>Sens :</strong> Anti-horaire.</li>
+                            <li><strong>Règle des 13 (SOW) :</strong> On saute la case de départ au second tour.</li>
+                            <li><strong>Captures :</strong> Si la dernière graine tombe chez l'adversaire dans une case qui atteint alors **2, 3 ou 4 graines**, tu les captures.</li>
+                            <li><strong>Solidarité :</strong> Interdit de laisser l'adversaire mourir de faim si tu peux le nourrir !</li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="zone-principale">
+                <div id="indicateur-tour">Clique sur 'Distribuer les Graines' pour commencer !</div>
+                
+                <div class="score-joueur" id="score-nord">Adversaire : <span id="score-txt-nord">0</span> graines</div>
+
+                <div id="zone-tablier"></div>
+
+                <div class="score-joueur" id="score-sud">Moi : <span id="score-txt-sud">0</span> graines</div>
+            </main>
+
+        </div>
+    </div>
+
+    <div id="ecran-fin" class="ecran">
+        <div class="carte-accueil">
+            <h1 id="titre-victoire">🏆 Félicitations !</h1>
+            <p id="message-victoire" class="sous-titre">Le joueur a gagné la partie !</p>
+            <p>Voulez-vous rejouer une autre partie ?</p>
+            
+            <div class="menu-principal">
+                <button id="btn-rejouer-oui" class="bouton-menu principal">✅ Oui, rejouer</button>
+                <button id="btn-rejouer-non" class="bouton-menu danger-bouton">❌ Non, quitter</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

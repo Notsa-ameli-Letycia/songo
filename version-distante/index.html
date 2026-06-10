@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Songo Interconnecté - Version Distante</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="ecran-accueil" class="ecran active">
+        <div class="carte-accueil">
+            <h1>Bienvenue au jeu du Songo Moderne</h1>
+            <p class="sous-titre">Le jeu de strategie traditionnel africain, réinventé</p>
+            
+            <div class="menu-principal" id="menu-choix-mode">
+                <button id="btn-mode-ia" class="bouton-menu principal">🤖 Contre l'Intelligence Artificielle</button>
+                <button id="btn-mode-ligne" class="bouton-menu">🌐 Défi En Ligne (Multijoueur)</button>
+                <button id="btn-partie-en-cours" class="bouton-menu" disabled>⏳ Retour au match en cours</button>
+            </div>
+
+            <div id="sous-menu-enligne" style="display: none; margin-top: 20px;">
+                <div class="groupe-boutons-lateraux">
+                    <button id="btn-creer-partie" class="bouton-lateral action" style="text-align: center;">➕ Créer un salon de jeu</button>
+                    
+                    <div class="separateur-central" style="font-size: 1rem; margin: 10px 0;">OU</div>
+                    
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; border: 1px dashed #d4a373;">
+                        <input type="text" id="input-code-salon" placeholder="Entrer le Code Salon (ex: 4X9B2)" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #d4a373; background: #1a100a; color: #fff; text-align: center; box-sizing: border-box; font-weight: bold; text-transform: uppercase;">
+                        <button id="btn-rejoindre-partie" class="bouton-lateral" style="text-align: center; margin-top: 10px; background-color: #d4a373; color: #2c1d11;">🤝 Rejoindre la table</button>
+                    </div>
+                </div>
+                <button id="btn-retour-accueil" class="bouton-indice" style="margin-top: 15px; background: none; border-color: #692a2a; color: #ff9999;">⬅️ Retour</button>
+            </div>
+
+            <div id="zone-affichage-code" style="display: none; margin-top: 20px; background: #1a100a; padding: 15px; border-radius: 10px; border: 2px solid #446944;">
+                <p style="margin: 0 0 5px 0; font-size: 0.9rem;">Partage ce code avec ton ami :</p>
+                <div id="code-genere" style="font-size: 2rem; font-weight: bold; color: #619361; letter-spacing: 4px;">------</div>
+                <p style="margin: 10px 0 0 0; font-style: italic; font-size: 0.8rem; color: #e6ccb2;">En attente de connexion de l'adversaire...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="ecran-jeu" class="ecran">
+        
+        <button id="btn-toggle-sidebar" class="bouton-hamburger">☰ Menu</button>
+
+        <div class="layout-jeu">
+            
+            <aside class="barre-laterale" id="ma-barre-laterale">
+                <h2>Menu Songo</h2>
+                <div class="groupe-boutons-lateraux">
+                    <button id="btn-initialiser" class="bouton-lateral action">🌱 Distribuer les Graines</button>
+                    <button id="btn-recommencer" class="bouton-lateral danger">🏳️ Capituler</button>
+                </div>
+
+                <div class="bloc-regles">
+                    <button id="btn-regles" class="bouton-indice">💡 Règles du Jeu</button>
+                    <div id="texte-regles" class="regles-cachees">
+                        <h3>Règles du Songo</h3>
+                        <ul>
+                            <li><strong>Le Plateau :</strong> 2 rangées de 7 cases. Ta rangée est en bas (Moi), l'adversaire en haut.</li>
+                            <li><strong>Le But :</strong> Capturer **40 graines** pour gagner.</li>
+                            <li><strong>Sens :</strong> Strictement Anti-horaire.</li>
+                            <li><strong>Règle du SOW :</strong> On saute la case de départ si elle contient 13 graines ou plus.</li>
+                            <li><strong>Captures :</strong> Si la dernière graine tombe chez l'adversaire dans une case qui atteint alors **2, 3 ou 4 graines**, tu les captures.</li>
+                            <li><strong>Solidarité :</strong> Interdit d'affamer l'adversaire s'il est possible de le nourrir !</li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="zone-principale">
+                <div id="indicateur-tour">Sélectionne un mode pour démarrer</div>
+                
+                <div class="score-joueur" id="score-nord">Adversaire : <span id="score-txt-nord">0</span> graines</div>
+
+                <div id="zone-tablier"></div>
+
+                <div class="score-joueur" id="score-sud">Moi : <span id="score-txt-sud">0</span> graines</div>
+            </main>
+
+        </div>
+    </div>
+
+    <div id="ecran-fin" class="ecran">
+        <div class="carte-accueil">
+            <h1 id="titre-victoire">🏆 Fin de match</h1>
+            <p id="message-victoire" class="sous-titre">Le joueur a gagné la partie !</p>
+            <p>Voulez-vous rejouer une autre partie ?</p>
+            
+            <div class="menu-principal">
+                <button id="btn-rejouer-oui" class="bouton-menu principal">✅ Oui, rejouer</button>
+                <button id="btn-rejouer-non" class="bouton-menu danger-bouton">❌ Retour à l'accueil</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
