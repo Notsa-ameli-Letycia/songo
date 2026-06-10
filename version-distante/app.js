@@ -1,5 +1,5 @@
 // ==========================================================================
-// MOTEUR DE JEU SONGO DISTANT - ARCHITECTURE APP.JS (V2)
+// MOTEUR DE JEU SONGO DISTANT - ARCHITECTURE APP.JS (V2 COMPLÈTE RÉSEAU)
 // ==========================================================================
 
 // 1. Éléments du DOM (Variables Globales)
@@ -47,14 +47,80 @@ let compteurCoupsSansCapture = 0;
 let modeJeu = "";          // "IA" ou "EN_LIGNE"
 let roleReseau = "";       // "HOTE" ou "INVITE"
 let codePartieActuel = ""; // Code unique de session
+let intervalleSynchro = null; // Boucle de rafraîchissement réseau
 
 // ==========================================================================
-// AIGUILLAGE & LIENS DES MENUS (V2 INTERFACES)
+// FONCTIONS RÉSEAU (AJAX / FETCH)
+// ==========================================================================
+
+// Boucle réseau de synchronisation (Vérifie toutes les 2 secondes si l'adversaire a joué)
+function lancerSynchronisation() {
+    if (intervalleSynchro) clearInterval(intervalleSynchro);
+    
+    intervalleSynchro = setInterval(() => {
+        if (modeJeu !== "EN_LIGNE" || !codePartieActuel) return;
+        
+        // Si c'est déjà à mon tour de jouer localement, inutile d'interroger le serveur
+        if (tourJoueur === "MOI") return;
+
+        fetch(`jouer.php?action=lire&code=${codePartieActuel}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    let etatDistant = JSON.parse(data.etat_jeu);
+                    
+                    // Vérification : est-ce que le tour enregistré sur MySQL correspond à mon rôle ?
+                    let prochainTourLocal = (etatDistant.tour === roleReseau) ? "MOI" : "ADVERSAIRE";
+                    
+                    if (prochainTourLocal === "MOI") {
+                        plateau = etatDistant.plateau;
+                        scoreSud = etatDistant.scoreSud;
+                        scoreNord = etatDistant.scoreNord;
+                        tourJoueur = "MOI";
+                        
+                        txtScoreSud.textContent = scoreSud;
+                        txtScoreNord.textContent = scoreNord;
+                        indicateurTour.textContent = "L'adversaire a joué ! C'est à TOI de jouer !";
+                        dessinerTablier();
+                        verifierFinDePartie();
+                    }
+                }
+            }).catch(err => console.log("Attente de la réponse du serveur..."));
+    }, 2000);
+}
+
+// Fonction pour sauvegarder mon coup sur la base de données distante
+function sauvegarderCoupDistant() {
+    if (modeJeu !== "EN_LIGNE") return;
+
+    // Si je suis HOTE, le prochain tour sur le serveur appartiendra à l'INVITE, et vice-versa
+    let prochainTourDistant = (roleReseau === "HOTE") ? "INVITE" : "HOTE";
+
+    let etatAEnvoyer = {
+        plateau: plateau,
+        scoreSud: scoreSud,
+        scoreNord: scoreNord,
+        tour: prochainTourDistant,
+        distribue: jeuDistribue
+    };
+
+    fetch(`jouer.php?action=jouer&code=${codePartieActuel}&etat=${encodeURIComponent(JSON.stringify(etatAEnvoyer))}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                console.log("Coup enregistré sur MySQL !");
+            }
+        }).catch(err => console.error("Erreur de transmission réseau."));
+}
+
+// ==========================================================================
+// AIGUILLAGE & LIENS DES MENUS
 // ==========================================================================
 
 // Bouton Mode IA
 btnModeIA.addEventListener('click', () => {
     modeJeu = "IA";
+    if (intervalleSynchro) clearInterval(intervalleSynchro);
     ecranAccueil.classList.remove('active');
     ecranJeu.classList.add('active');
     btnPartieEnCours.disabled = false;
@@ -79,13 +145,46 @@ btnCreerPartie.addEventListener('click', () => {
     modeJeu = "EN_LIGNE";
     roleReseau = "HOTE";
     
-    // Génération locale provisoire pour tester l'UI
+    // Génération du code de salon unique
     codePartieActuel = Math.random().toString(36).substring(2, 7).toUpperCase();
     codeGenereText.textContent = codePartieActuel;
     zoneAffichageCode.style.display = 'block';
     
-    // TODO: ÉTAPE AJAX - Envoyer ce code à jouer.php
-    console.log(`Salon créé. Code: ${codePartieActuel}.`);
+    let etatInitial = {
+        plateau: Array(14).fill(5), // 5 graines par case au Songo
+        scoreSud: 0,
+        scoreNord: 0,
+        tour: "HOTE", // L'hôte commence toujours (Sud)
+        distribue: true
+    };
+
+    // Envoi AJAX pour initialiser la ligne dans la table MySQL
+    fetch(`jouer.php?action=creer&code=${codePartieActuel}&etat=${encodeURIComponent(JSON.stringify(etatInitial))}`)
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === "success") {
+                console.log(`Salon créé. Code: ${codePartieActuel}`);
+                ecranAccueil.classList.remove('active');
+                ecranJeu.classList.add('active');
+                btnPartieEnCours.disabled = false;
+                
+                plateau = etatInitial.plateau;
+                scoreSud = etatInitial.scoreSud;
+                scoreNord = etatInitial.scoreNord;
+                tourJoueur = "MOI"; 
+                jeuDistribue = true;
+                
+                txtScoreSud.textContent = scoreSud;
+                txtScoreNord.textContent = scoreNord;
+                indicateurTour.textContent = "Salon créé ! Partage le code " + codePartieActuel + ". C'est à TOI de jouer !";
+                dessinerTablier();
+                
+                // Lancement du guetteur réseau
+                lancerSynchronisation();
+            } else {
+                alert("Erreur serveur lors de la réservation du salon.");
+            }
+        }).catch(err => alert("Erreur réseau de connexion au serveur."));
 });
 
 // Action : Rejoindre une partie en ligne (Invité)
@@ -100,13 +199,34 @@ btnRejoindrePartie.addEventListener('click', () => {
     roleReseau = "INVITE";
     codePartieActuel = codeTape;
     
-    // TODO: ÉTAPE AJAX - Vérifier la validité du code via jouer.php
-    console.log(`Connexion Ajax au salon : ${codePartieActuel}...`);
-    
-    ecranAccueil.classList.remove('active');
-    ecranJeu.classList.add('active');
-    btnPartieEnCours.disabled = false;
-    initialiserPartie();
+    // Connexion Ajax pour récupérer l'état actuel de la partie
+    fetch(`jouer.php?action=rejoindre&code=${codePartieActuel}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                let etatDistant = JSON.parse(data.etat_jeu);
+                plateau = etatDistant.plateau;
+                scoreSud = etatDistant.scoreSud;
+                scoreNord = etatDistant.scoreNord;
+                
+                tourJoueur = (etatDistant.tour === "INVITE") ? "MOI" : "ADVERSAIRE";
+                jeuDistribue = etatDistant.distribue;
+                
+                ecranAccueil.classList.remove('active');
+                ecranJeu.classList.add('active');
+                btnPartieEnCours.disabled = false;
+                
+                txtScoreSud.textContent = scoreSud;
+                txtScoreNord.textContent = scoreNord;
+                indicateurTour.textContent = tourJoueur === "MOI" ? "C'est à TOI de jouer !" : "Attente du coup de l'adversaire...";
+                dessinerTablier();
+                
+                // Lancement du guetteur réseau
+                lancerSynchronisation();
+            } else {
+                alert("Code de salon introuvable.");
+            }
+        }).catch(err => alert("Erreur lors de la liaison au salon distant."));
 });
 
 // Retour au match via bouton d'accueil
@@ -137,6 +257,7 @@ btnRejouerOui.addEventListener('click', () => {
 });
 
 btnRejouerNon.addEventListener('click', () => {
+    if (intervalleSynchro) clearInterval(intervalleSynchro);
     ecranFin.classList.remove('active');
     sousMenuEnLigne.style.display = 'none';
     zoneAffichageCode.style.display = 'none';
@@ -150,7 +271,7 @@ btnRegles.addEventListener('click', () => {
     btnRegles.textContent = texteRegles.style.display === 'block' ? '💡 Masquer les Règles' : '💡 Règles du Jeu';
 });
 
-// Bouton Distribuer les Graines
+// Bouton Distribuer les Graines (Mode local et IA)
 btnInitialiser.addEventListener('click', () => {
     plateau = Array(14).fill(5); 
     scoreSud = 0; scoreNord = 0; compteurCoupsSansCapture = 0;
@@ -241,16 +362,25 @@ function genererGrainesVisuelles(conteneur, nbrGraines) {
 // 4. LOGIQUE DES COUPS, SEMIS ET SOLIDARITÉ (SENS ANTI-HORAIRE)
 // ==========================================================================
 function gererClicCase(index) {
-    if (tourJoueur === "MOI" && (index < 7 || index > 13)) return; 
-    if (tourJoueur === "ADVERSAIRE" && (index < 0 || index > 6)) return; 
+    // Sécurité réseau : interdiction de cliquer si ce n'est pas mon tour
+    if (tourJoueur !== "MOI") return;
+
+    // Délimitation stricte des camps (Hôte au Sud 7-13, Invité au Nord 0-6)
+    if (modeJeu === "EN_LIGNE") {
+        if (roleReseau === "HOTE" && (index < 7 || index > 13)) return; 
+        if (roleReseau === "INVITE" && (index < 0 || index > 6)) return;
+    } else {
+        if (tourJoueur === "MOI" && (index < 7 || index > 13)) return; 
+        if (tourJoueur === "ADVERSAIRE" && (index < 0 || index > 6)) return; 
+    }
     
     let grainesADistribuer = plateau[index];
     if (grainesADistribuer === 0) return; 
 
-    let adversaireAffame = verifierCampVide(tourJoueur === "MOI" ? "ADVERSAIRE" : "MOI");
+    let adversaireAffame = verifierCampVide(roleReseau === "HOTE" || modeJeu !== "EN_LIGNE" ? "ADVERSAIRE" : "MOI");
     if (adversaireAffame) {
         let coupNourrit = verifierSiCoupNourrit(index, grainesADistribuer);
-        let peutNourrirAutrement = verifierSiPeutNourrir(tourJoueur);
+        let peutNourrirAutrement = verifierSiPeutNourrir(modeJeu === "EN_LIGNE" ? roleReseau : tourJoueur);
         
         if (peutNourrirAutrement && !coupNourrit) {
             alert("Solidarité obligatoire ! Vous devez nourrir votre adversaire.");
@@ -261,6 +391,7 @@ function gererClicCase(index) {
     plateau[index] = 0;
     let indexCourant = index;
 
+    // Semis dans le sens anti-horaire
     while (grainesADistribuer > 0) {
         indexCourant = (indexCourant - 1 + 14) % 14;
         if (indexCourant === index) continue; 
@@ -271,7 +402,14 @@ function gererClicCase(index) {
     let ancienScoreSud = scoreSud;
     let ancienScoreNord = scoreNord;
 
-    verifierCaptures(indexCourant);
+    // Capture conditionnelle selon le rôle
+    if (modeJeu === "EN_LIGNE") {
+        tourJoueur = (roleReseau === "HOTE") ? "MOI" : "ADVERSAIRE";
+        verifierCaptures(indexCourant);
+    } else {
+        verifierCaptures(indexCourant);
+    }
+    
     dessinerTablier();
 
     if (scoreSud > ancienScoreSud || scoreNord > ancienScoreNord) {
@@ -280,18 +418,22 @@ function gererClicCase(index) {
         compteurCoupsSansCapture++; 
     }
 
-    if (verifierFinDePartie()) return;
-
-    tourJoueur = (tourJoueur === "MOI") ? "ADVERSAIRE" : "MOI";
-    indicateurTour.textContent = tourJoueur === "MOI" ? "C'est à TOI de jouer !" : "C'est au tour de l'ADVERSAIRE !";
-
-    if (!verifierSiPeutJouer(tourJoueur)) {
-        gererFamineIrreversible();
+    if (verifierFinDePartie()) {
+        if (modeJeu === "EN_LIGNE") sauvegarderCoupDistant();
         return;
     }
 
-    // SI MODE IA ACTIVÉ
-    if (modeJeu === "IA" && tourJoueur === "ADVERSAIRE") {
+    // Bascule du tour en attente
+    tourJoueur = "ADVERSAIRE";
+    indicateurTour.textContent = "C'est au tour de l'ADVERSAIRE ! Transmission...";
+
+    // Sauvegarde en ligne immédiate
+    if (modeJeu === "EN_LIGNE") {
+        sauvegarderCoupDistant();
+    }
+
+    // Exécution automatique de l'IA si activé
+    if (modeJeu === "IA") {
         setTimeout(executerCoupIA, 800); 
     }
 }
@@ -332,8 +474,9 @@ function verifierCampVide(camp) {
 
 function verifierSiCoupNourrit(indexDepart, nbrGraines) {
     let indexCourant = indexDepart;
-    let rangeeAdverseDebut = (tourJoueur === "MOI") ? 0 : 7;
-    let rangeeAdverseFin = (tourJoueur === "MOI") ? 6 : 13;
+    let joueurActuel = (modeJeu === "EN_LIGNE") ? roleReseau : tourJoueur;
+    let rangeeAdverseDebut = (joueurActuel === "MOI" || joueurActuel === "HOTE") ? 0 : 7;
+    let rangeeAdverseFin = (joueurActuel === "MOI" || joueurActuel === "HOTE") ? 6 : 13;
 
     while (nbrGraines > 0) {
         indexCourant = (indexCourant - 1 + 14) % 14;
@@ -345,8 +488,8 @@ function verifierSiCoupNourrit(indexDepart, nbrGraines) {
 }
 
 function verifierSiPeutNourrir(joueur) {
-    let debut = (joueur === "MOI") ? 7 : 0;
-    let fin = (joueur === "MOI") ? 13 : 6;
+    let debut = (joueur === "MOI" || joueur === "HOTE") ? 7 : 0;
+    let fin = (joueur === "MOI" || joueur === "HOTE") ? 13 : 6;
     for (let i = debut; i <= fin; i++) {
         if (plateau[i] > 0 && verifierSiCoupNourrit(i, plateau[i])) return true;
     }
@@ -354,8 +497,8 @@ function verifierSiPeutNourrir(joueur) {
 }
 
 function verifierSiPeutJouer(joueur) {
-    let debut = (joueur === "MOI") ? 7 : 0;
-    let fin = (joueur === "MOI") ? 13 : 6;
+    let debut = (joueur === "MOI" || joueur === "HOTE") ? 7 : 0;
+    let fin = (joueur === "MOI" || joueur === "HOTE") ? 13 : 6;
     for (let i = debut; i <= fin; i++) {
         if (plateau[i] > 0) return true;
     }
@@ -377,16 +520,16 @@ function verifierFinDePartie(forceFin = false) {
     let totalGrainesTablier = plateau.reduce((a, b) => a + b, 0);
 
     if (scoreSud >= 40) {
-        afficherEcranFin("🏆 Victoire Éclatante !", `Tu gagnes avec ${scoreSud} graines !`); return true;
+        afficherEcranFin("🏆 Victoire Éclatante !", `Le Joueur Sud gagne avec ${scoreSud} graines !`); return true;
     }
     if (scoreNord >= 40) {
-        afficherEcranFin("👑 Défaite !", `L'Adversaire remporte la partie.`); return true;
+        afficherEcranFin("👑 Défaite !", `Le Joueur Nord remporte la partie avec ${scoreNord} graines.`); return true;
     }
     if (scoreSud > 35 && (scoreNord + totalGrainesTablier) < scoreSud) {
-        afficherEcranFin("🏆 Victoire Tactique !", `Avance invincible !`); return true;
+        afficherEcranFin("🏆 Victoire Tactique !", `Avance invincible pour le Sud !`); return true;
     }
     if (scoreNord > 35 && (scoreSud + totalGrainesTablier) < scoreNord) {
-        afficherEcranFin("👑 Défaite Tactique !", `L'Adversaire possède une avance invincible.`); return true;
+        afficherEcranFin("👑 Défaite Tactique !", `Le Nord possède une avance invincible.`); return true;
     }
 
     if (compteurCoupsSansCapture >= 20) {
@@ -400,9 +543,9 @@ function verifierFinDePartie(forceFin = false) {
 
     if (totalGrainesTablier === 0 || forceFin) {
         if (scoreSud > scoreNord) {
-            afficherEcranFin("🏆 Victoire aux Points !", `Tu gagnes aux points : ${scoreSud} à ${scoreNord} !`);
+            afficherEcranFin("🏆 Victoire aux Points !", `Sud gagne aux points : ${scoreSud} à ${scoreNord} !`);
         } else if (scoreNord > scoreSud) {
-            afficherEcranFin("👑 Défaite aux Points !", `L'Adversaire l'emporte.`);
+            afficherEcranFin("👑 Défaite aux Points !", `Nord l'emporte : ${scoreNord} à ${scoreSud}.`);
         } else {
             afficherEcranFin("🤝 Match Nul !", `Égalité parfaite.`);
         }
@@ -412,6 +555,7 @@ function verifierFinDePartie(forceFin = false) {
 }
 
 function afficherEcranFin(titre, message) {
+    if (intervalleSynchro) clearInterval(intervalleSynchro);
     ecranJeu.classList.remove('active');
     ecranFin.classList.add('active');
     titreVictoire.textContent = titre;
@@ -429,19 +573,23 @@ function executerCoupIA() {
     }
     if (casesValides.length === 0) return;
     let indexChoisi = casesValides[Math.floor(Math.random() * casesValides.length)];
+    
+    tourJoueur = "MOI"; 
     gererClicCase(indexChoisi);
 }
 
 // ==========================================================================
-// 7. GESTION DU MASQUAGE DE LA BARRE LATÉRALE
+// 7. GESTION DU TOGGLE SIDEBAR & STYLE DES GRAINES
 // ==========================================================================
 const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
 const maBarreLaterale = document.getElementById('ma-barre-laterale');
 
-btnToggleSidebar.addEventListener('click', () => {
-    maBarreLaterale.classList.toggle('cachee');
-    btnToggleSidebar.textContent = maBarreLaterale.classList.contains('cachee') ? "☰ Afficher le Menu" : "☰ Cacher le Menu";
-});
+if(btnToggleSidebar && maBarreLaterale) {
+    btnToggleSidebar.addEventListener('click', () => {
+        maBarreLaterale.classList.toggle('cachee');
+        btnToggleSidebar.textContent = maBarreLaterale.classList.contains('cachee') ? "☰ Afficher le Menu" : "☰ Cacher le Menu";
+    });
+}
 
 const styleGraine = document.createElement('style');
 styleGraine.innerHTML = `.graine-pion { width: 15px; height: 15px; background: radial-gradient(circle at 4px 4px, #5a3825, #221208); border-radius: 50%; box-shadow: 2px 2px 3px rgba(0,0,0,0.6), inset -1px -1px 2px rgba(0,0,0,0.8); }`;
