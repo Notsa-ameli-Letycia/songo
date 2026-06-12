@@ -301,10 +301,88 @@ h1 {
     cursor: pointer;
     position: relative;
     box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.8);
+    transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+    overflow: hidden;
 }
 
-.case-fosse:hover {
+.case-fosse:hover:not(.case-depart):not(.case-semis):not(.case-capture) {
     background: #4e2f19;
+}
+
+.case-fosse.case-depart {
+    background: #5a3825;
+    box-shadow: inset 0 0 0 3px #d4a373, 0 0 18px rgba(212, 163, 115, 0.45);
+    transform: scale(1.04);
+}
+
+.case-fosse.case-semis {
+    background: #55402a;
+    box-shadow: inset 0 0 0 2px #e6ccb2, 0 0 14px rgba(230, 204, 178, 0.35);
+    transform: scale(1.06);
+}
+
+.case-fosse.case-capture {
+    background: #6b3a2a;
+    box-shadow: inset 0 0 0 3px #ff9999, 0 0 20px rgba(255, 120, 80, 0.5);
+    animation: pulse-capture 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-capture {
+    from { transform: scale(1.02); }
+    to { transform: scale(1.08); }
+}
+
+.tablier-bloque .case-fosse {
+    pointer-events: none;
+    cursor: default;
+}
+
+.zone-graines {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.graine-pion {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: radial-gradient(circle at 4px 4px, #c49a6c, #5a3825 45%, #221208);
+    border-radius: 50%;
+    box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.6), inset -1px -1px 2px rgba(0, 0, 0, 0.8);
+    transition: transform 0.15s ease;
+}
+
+.graines-surplus {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    color: #d4a373;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+.graine-volante {
+    position: fixed;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 5px 5px, #e6ccb2, #8b5a2b 50%, #3e2513);
+    box-shadow: 0 0 12px rgba(212, 163, 115, 0.9), 0 3px 6px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: left 0.32s cubic-bezier(0.34, 1.2, 0.64, 1), top 0.32s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.graine-volante.graine-capture {
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle at 4px 4px, #ffb347, #c45c26 55%, #5c1d11);
+    box-shadow: 0 0 16px rgba(255, 140, 60, 0.95);
+    transition-duration: 0.4s;
 }
 
 .chiffre-graines {
@@ -338,4 +416,296 @@ h1 {
 .danger-bouton:hover {
     background-color: #b04a4a;
     color: white;
+}
+
+.sous-menu {
+    margin-top: 20px;
+}
+
+.titre-sous-menu {
+    color: #e6ccb2;
+    font-size: 1rem;
+    margin: 0 0 15px 0;
+}
+
+.selecteur-niveau-ia {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid #a67c52;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+}
+
+.niveau-ia-controle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.borne-niveau {
+    font-size: 0.85rem;
+    color: #a67c52;
+    font-weight: bold;
+    min-width: 1.2rem;
+}
+
+.slider-niveau-ia {
+    flex: 1;
+    accent-color: #d4a373;
+    cursor: pointer;
+}
+
+.niveau-ia-affichage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.badge-niveau {
+    background: #d4a373;
+    color: #2c1d11;
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 1rem;
+}
+
+.profondeur-niveau {
+    font-size: 0.8rem;
+    color: #e6ccb2;
+    background: rgba(68, 105, 68, 0.25);
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid #446944;
+}
+
+.description-niveau-ia {
+    font-size: 0.9rem;
+    color: #e6ccb2;
+    font-style: italic;
+    margin: 0 0 14px 0;
+    min-height: 2.5em;
+}
+
+#btn-demarrer-ia {
+    width: 100%;
+}
+
+.bouton-retour-sous-menu {
+    margin-top: 15px;
+    background: none;
+    border-color: #692a2a;
+    color: #ff9999;
+}
+
+.bouton-centre {
+    text-align: center;
+}
+
+.separateur-menu {
+    font-size: 1rem;
+    margin: 10px 0;
+}
+
+.panneau-pseudo {
+    background: rgba(68, 105, 68, 0.15);
+    border: 1px solid #446944;
+    border-radius: 10px;
+    padding: 12px 15px;
+    margin-bottom: 14px;
+}
+
+.champ-pseudo {
+    text-transform: none;
+    font-weight: 600;
+}
+
+.nom-joueur {
+    color: #e6ccb2;
+}
+
+.nom-joueur.nom-moi {
+    color: #d4a373;
+    text-shadow: 0 0 8px rgba(212, 163, 115, 0.35);
+}
+
+.panneau-rejoindre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px dashed #d4a373;
+}
+
+.label-salon {
+    display: block;
+    font-size: 0.8rem;
+    color: #e6ccb2;
+    margin-bottom: 4px;
+    text-align: left;
+}
+
+.champ-salon {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #d4a373;
+    background: #1a100a;
+    color: #fff;
+    text-align: center;
+    box-sizing: border-box;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.bouton-rejoindre {
+    margin-top: 4px;
+    background-color: #d4a373;
+    color: #2c1d11;
+}
+
+.zone-salon-cree {
+    margin-top: 20px;
+    background: #1a100a;
+    padding: 18px;
+    border-radius: 10px;
+    border: 2px solid #446944;
+}
+
+.zone-salon-titre {
+    margin: 0 0 12px 0;
+    font-size: 0.9rem;
+    color: #e6ccb2;
+}
+
+.identifiants-salon {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bloc-identifiant {
+    background: rgba(68, 105, 68, 0.2);
+    border: 1px solid #446944;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.bloc-cle {
+    background: rgba(166, 124, 82, 0.15);
+    border-color: #d4a373;
+}
+
+.label-identifiant {
+    display: block;
+    font-size: 0.75rem;
+    color: #a67c52;
+    margin-bottom: 4px;
+}
+
+.valeur-identifiant {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #619361;
+    letter-spacing: 4px;
+}
+
+.valeur-cle {
+    color: #d4a373;
+    letter-spacing: 3px;
+    font-size: 1.3rem;
+}
+
+.statut-salon {
+    margin: 12px 0 0 0;
+    font-size: 0.85rem;
+    color: #e6ccb2;
+    font-style: italic;
+}
+
+.statut-salon strong {
+    color: #619361;
+    font-style: normal;
+}
+
+.bouton-annuler-salon {
+    margin-top: 12px;
+    width: 100%;
+    border-color: #692a2a;
+    color: #ff9999;
+}
+
+.liste-salons {
+    margin-top: 18px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    border: 1px solid #446944;
+}
+
+.entete-liste-salons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #e6ccb2;
+    margin-bottom: 8px;
+}
+
+.bouton-mini {
+    background: #2c1d11;
+    border: 1px solid #d4a373;
+    color: #d4a373;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.salons-ouverts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.salon-ouvert-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    background: rgba(68, 105, 68, 0.15);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.salon-ouvert-code {
+    font-weight: bold;
+    color: #619361;
+    letter-spacing: 2px;
+}
+
+.salon-ouvert-joueurs {
+    color: #e6ccb2;
+    font-size: 0.8rem;
+}
+
+.salons-vide {
+    font-size: 0.8rem;
+    color: #a67c52;
+    font-style: italic;
+    text-align: center;
+    padding: 8px;
+}
+
+#indicateur-niveau-ia {
+    font-size: 0.95rem;
+    color: #d4a373;
+    margin-top: -8px;
+    margin-bottom: 10px;
 }

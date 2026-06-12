@@ -19,24 +19,72 @@
                 <button id="btn-partie-en-cours" class="bouton-menu" disabled>⏳ Retour au match en cours</button>
             </div>
 
-            <div id="sous-menu-enligne" style="display: none; margin-top: 20px;">
-                <div class="groupe-boutons-lateraux">
-                    <button id="btn-creer-partie" class="bouton-lateral action" style="text-align: center;">➕ Créer un salon de jeu</button>
-                    
-                    <div class="separateur-central" style="font-size: 1rem; margin: 10px 0;">OU</div>
-                    
-                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; border: 1px dashed #d4a373;">
-                        <input type="text" id="input-code-salon" placeholder="Entrer le Code Salon (ex: 4X9B2)" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #d4a373; background: #1a100a; color: #fff; text-align: center; box-sizing: border-box; font-weight: bold; text-transform: uppercase;">
-                        <button id="btn-rejoindre-partie" class="bouton-lateral" style="text-align: center; margin-top: 10px; background-color: #d4a373; color: #2c1d11;">🤝 Rejoindre la table</button>
+            <div id="sous-menu-ia" class="sous-menu" hidden>
+                <p class="titre-sous-menu">Règle la force de l'adversaire artificiel</p>
+                <div class="selecteur-niveau-ia">
+                    <label class="label-salon" for="input-niveau-ia">Niveau 1 = très facile · Niveau 20 = adversaire redoutable</label>
+                    <div class="niveau-ia-controle">
+                        <span class="borne-niveau">1</span>
+                        <input type="range" id="input-niveau-ia" class="slider-niveau-ia" min="1" max="20" value="10">
+                        <span class="borne-niveau">20</span>
                     </div>
+                    <div class="niveau-ia-affichage">
+                        <span id="valeur-niveau-ia" class="badge-niveau">Niveau 10</span>
+                        <span id="profondeur-niveau-ia" class="profondeur-niveau">Réflexion : correcte</span>
+                    </div>
+                    <p id="description-niveau-ia" class="description-niveau-ia">Confirmé — elle compare les options et se montre plus prudente.</p>
+                    <button id="btn-demarrer-ia" class="bouton-menu principal">▶️ Commencer contre l'IA</button>
                 </div>
-                <button id="btn-retour-accueil" class="bouton-indice" style="margin-top: 15px; background: none; border-color: #692a2a; color: #ff9999;">⬅️ Retour</button>
+                <button id="btn-retour-accueil-ia" class="bouton-indice bouton-retour-sous-menu">⬅️ Retour</button>
             </div>
 
-            <div id="zone-affichage-code" style="display: none; margin-top: 20px; background: #1a100a; padding: 15px; border-radius: 10px; border: 2px solid #446944;">
-                <p style="margin: 0 0 5px 0; font-size: 0.9rem;">Partage ce code avec ton ami :</p>
-                <div id="code-genere" style="font-size: 2rem; font-weight: bold; color: #619361; letter-spacing: 4px;">------</div>
-                <p style="margin: 10px 0 0 0; font-style: italic; font-size: 0.8rem; color: #e6ccb2;">En attente de connexion de l'adversaire...</p>
+            <div id="sous-menu-enligne" class="sous-menu" hidden>
+                <p class="titre-sous-menu">Salons privés — 2 joueurs maximum par table</p>
+
+                <div class="panneau-pseudo">
+                    <label class="label-salon" for="input-pseudo-joueur">Ton pseudo</label>
+                    <input type="text" id="input-pseudo-joueur" class="champ-salon champ-pseudo" placeholder="Ex : Amina" maxlength="20" autocomplete="nickname">
+                </div>
+
+                <div class="groupe-boutons-lateraux">
+                    <button id="btn-creer-partie" class="bouton-lateral action bouton-centre">➕ Créer un salon de jeu</button>
+
+                    <div class="separateur-central separateur-menu">OU</div>
+
+                    <div class="panneau-rejoindre">
+                        <label class="label-salon" for="input-code-salon">Code du salon</label>
+                        <input type="text" id="input-code-salon" class="champ-salon" placeholder="Ex : 4X9B2" maxlength="5" autocomplete="off">
+                        <label class="label-salon" for="input-cle-salon">Clé d'accès secrète</label>
+                        <input type="text" id="input-cle-salon" class="champ-salon" placeholder="Ex : K7M2P9X4" maxlength="8" autocomplete="off">
+                        <button id="btn-rejoindre-partie" class="bouton-lateral bouton-centre bouton-rejoindre">🤝 Rejoindre la table</button>
+                    </div>
+                </div>
+
+                <div id="liste-salons-disponibles" class="liste-salons" hidden>
+                    <div class="entete-liste-salons">
+                        <span>Salons en attente d'un joueur</span>
+                        <button id="btn-rafraichir-salons" class="bouton-mini" type="button">🔄</button>
+                    </div>
+                    <ul id="salons-ouverts" class="salons-ouverts"></ul>
+                </div>
+
+                <button id="btn-retour-accueil" class="bouton-indice bouton-retour-sous-menu">⬅️ Retour</button>
+            </div>
+
+            <div id="zone-affichage-code" class="zone-salon-cree" hidden>
+                <p class="zone-salon-titre">Ton salon est prêt — transmets ces identifiants :</p>
+                <div class="identifiants-salon">
+                    <div class="bloc-identifiant">
+                        <span class="label-identifiant">Code salon</span>
+                        <span id="code-genere" class="valeur-identifiant">------</span>
+                    </div>
+                    <div class="bloc-identifiant bloc-cle">
+                        <span class="label-identifiant">Clé d'accès</span>
+                        <span id="cle-generee" class="valeur-identifiant valeur-cle">--------</span>
+                    </div>
+                </div>
+                <p id="statut-salon-hote" class="statut-salon">Joueurs connectés : <strong>1/2</strong> — en attente de l'adversaire...</p>
+                <button id="btn-annuler-salon" class="bouton-indice bouton-annuler-salon" type="button">✖ Annuler le salon</button>
             </div>
         </div>
     </div>
@@ -73,11 +121,17 @@
             <main class="zone-principale">
                 <div id="indicateur-tour">Sélectionne un mode pour démarrer</div>
                 
-                <div class="score-joueur" id="score-nord">Adversaire : <span id="score-txt-nord">0</span> graines</div>
+                <div class="score-joueur" id="score-nord">
+                    <span id="nom-joueur-nord" class="nom-joueur">Joueur Nord</span> :
+                    <span id="score-txt-nord">0</span> graines
+                </div>
 
                 <div id="zone-tablier"></div>
 
-                <div class="score-joueur" id="score-sud">Moi : <span id="score-txt-sud">0</span> graines</div>
+                <div class="score-joueur" id="score-sud">
+                    <span id="nom-joueur-sud" class="nom-joueur">Joueur Sud</span> :
+                    <span id="score-txt-sud">0</span> graines
+                </div>
             </main>
 
         </div>
